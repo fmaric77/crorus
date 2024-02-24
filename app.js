@@ -3,6 +3,7 @@ const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
+PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(cors());
@@ -21,4 +22,4 @@ app.get('/words', (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+app.listen(PORT, () => console.log(`Server running on port http://localhost:${PORT}`));
