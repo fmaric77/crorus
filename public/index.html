@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Word Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+    <button id="fullscreen-btn">Fullscreen</button>
+    <div id="description">
+        <p>English: This tool checks the intelligibility of your text by comparing each word to a list of known words.
+            Words found in the list are highlighted in green, and words not found are highlighted in red.</p>
+        <p>Russian: Этот инструмент проверяет понятность вашего текста, сравнивая каждое слово со списком известных
+            слов. Слова, найденные в списке, выделены зеленым цветом, а не найденные слова - красным.</p>
+        <p>Croatian: Ovaj alat provjerava razumljivost vašeg teksta uspoređujući svaku riječ s popisom poznatih riječi.
+            Riječi pronađene na popisu istaknute su zelenom bojom, a riječi koje nisu pronađene istaknute su crvenom
+            bojom.</p>
+    </div>
+    <div id="instructions">
+        <p>English: Enter your text into the text area. The application will automatically check each word as you type.
+            Words found in our list will be highlighted in green, and words not found will be highlighted in red.</p>
+        <p>Russian: Введите свой текст в текстовую область. Приложение автоматически проверит каждое слово при вводе.
+            Слова, найденные в нашем списке, будут выделены зеленым цветом, а не найденные слова - красным.</p>
+        <p>Croatian: Unesite svoj tekst u tekstualno područje. Aplikacija će automatski provjeriti svaku riječ dok
+            tipkate. Riječi pronađene na našem popisu bit će istaknute zelenom bojom, a riječi koje nisu pronađene bit
+            će istaknute crvenom bojom.</p>
+    </div>
+    <textarea id="word-checker-input" rows="4" cols="50"></textarea>
+    <div id="word-checker-output"></div>
+    <div id="intelligibility"></div>
+
+    <script>
+        var words = new Set();
+
+        // Fetch the words from the server
+        axios.get('http://localhost:3000/words')
+            .then(function (response) {
+                // Add each word to the set
+                response.data.forEach(word => words.add(word));
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+        document.getElementById('word-checker-input').addEventListener('input', function (e) {
+            var input = e.target.value;
+            var output = document.getElementById('word-checker-output');
+            var intelligibility = document.getElementById('intelligibility');
+            output.innerHTML = "";
+            intelligibility.innerHTML = "";
+
+            // Remove special symbols and split the input into words
+            var inputWords = input.trim().replace(/[;.,!?]/g, "").split(/\s+/);
+
+            var wordCount = inputWords.length;
+            var foundCount = 0;
+
+            // Check each word
+            for (var i = 0; i < wordCount; i++) {
+                var word = inputWords[i];
+                if (words.has(word.toLowerCase())) {
+                    // If the word is in the list, add it to the output with the "highlight" class
+                    output.innerHTML += '<span class="highlight">' + word + '</span> ';
+                    foundCount++;
+                } else {
+                    // If the word is not in the list, remove the last character and check again
+                    var wordWithoutLastChar = word.slice(0, -1);
+                    if (words.has(wordWithoutLastChar.toLowerCase())) {
+                        // If the word without the last character is in the list, add it to the output with the "highlight" class
+                        output.innerHTML += '<span class="highlight">' + word + '</span> ';
+                        foundCount++; // Increment the found count
+                    } else {
+                        // If the word without the last character is not in the list, add it to the output with the "not-found" class
+                        output.innerHTML += '<span class="not-found">' + word + '</span> ';
+                    }
+                }
+            }
+
+            // Calculate the percentage of words that are in the list
+            var percentage = (foundCount / wordCount) * 100;
+            intelligibility.innerHTML = 'Intelligibility: ' + percentage.toFixed(2) + '%';
+        });
+
+        var isFullscreen = false;
+        var originalStyles = {};
+
+        document.getElementById('fullscreen-btn').addEventListener('click', function () {
+            var output = document.getElementById('word-checker-output');
+
+            if (!isFullscreen) {
+                // Store original styles
+                originalStyles.position = output.style.position;
+                originalStyles.width = output.style.width;
+                originalStyles.height = output.style.height;
+                originalStyles.zIndex = output.style.zIndex;
+
+                // Enter fullscreen mode
+                output.style.position = 'fixed';
+                output.style.top = '0';
+                output.style.left = '0';
+                output.style.width = '100%';
+                output.style.height = '100%';
+                output.style.zIndex = '9999';
+                this.style.zIndex = '10000';
+                isFullscreen = true;
+            } else {
+                // Exit fullscreen mode and revert to original styles
+                output.style.position = originalStyles.position;
+                output.style.width = originalStyles.width;
+                output.style.height = originalStyles.height;
+                output.style.zIndex = originalStyles.zIndex;
+                this.style.zIndex = 'auto';
+                isFullscreen = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
