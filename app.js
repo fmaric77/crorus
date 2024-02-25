@@ -1,25 +1,19 @@
-// server.js
-const express = require('express');
+// netlify/functions/words.js
 const fs = require('fs');
-const cors = require('cors');
 const path = require('path');
-PORT = process.env.PORT || 3000;
 
-const app = express();
-app.use(cors());
-
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/words', (req, res) => {
-    fs.readFile('100+.json', 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send(err);
-        } else {
-            res.send(JSON.parse(data));
-        }
-    });
-});
-
-app.listen(PORT, () => console.log(`Server running on port http://localhost:${PORT}`));
+exports.handler = async (event, context) => {
+    try {
+        const data = fs.readFileSync(path.join(__dirname, '..', '..', '100+.json'), 'utf8');
+        return {
+            statusCode: 200,
+            body: data
+        };
+    } catch (err) {
+        console.error(err);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ msg: err.message })
+        };
+    }
+};
